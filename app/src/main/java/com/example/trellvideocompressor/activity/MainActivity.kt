@@ -128,12 +128,14 @@ class MainActivity : AppCompatActivity() {
 
                 screenNo!!.setText("Screen 3")
                 Toast.makeText(this, "Playing Compressed Video", Toast.LENGTH_LONG).show()
+                isCompressedFilePlaying = true
+                compressButton!!.setText("Pause")
                 playVideo(compressedFileUri!!)
 
             }else if(isCompressedFilePlaying!!){
 
                 compressButton!!.setText("Play")
-                isCompressedFilePlaying = true
+                isCompressedFilePlaying = false
                 videoView!!.pause()
 
             }else if(!isCompressedFilePlaying!!){
