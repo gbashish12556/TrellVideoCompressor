@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">TrellVideoCompressor</string>
+    <string name="data">%1$s</string>
+    <string name="compress_video">Compress Video</string>
+    <string name="compressing">Compressing..</string>
+    <string name="successfully_compressed">Successfully Compressed</string>
+    <string name="play_compressed_video">Play Compressed Video</string>
+    <string name="playing_compressed_video">Playing Compressed Video</string>
+    <string name="screen1">Screen 1</string>
+    <string name="screen2">Screen 2</string>
+    <string name="screen3">Screen 3</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="enter_valid_bitrate">Enter a valid bit rate</string>
 </resources>

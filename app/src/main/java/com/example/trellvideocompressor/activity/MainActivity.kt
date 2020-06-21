@@ -20,36 +20,41 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.databinding.DataBindingUtil.setContentView
 import androidx.lifecycle.Observer
+import butterknife.BindView
+import butterknife.ButterKnife
+import com.example.trellvideocompressor.databinding.ActivityMainBinding
 import java.io.File
 import java.lang.Exception
 
 
 class MainActivity : AppCompatActivity() {
 
+
+    @BindView(R.id.compressButtton) lateinit var compressButton: Button
+    @BindView(R.id.uploadButton) lateinit var uploadButton: Button
+    @BindView(R.id.bitRate) lateinit var bitRate: EditText
+    @BindView(R.id.videoView) lateinit var videoView: VideoView
+    @BindView(R.id.videoLayout) lateinit var videoLayout: ConstraintLayout
+
     private var viewModel: VideoCompressionViewModel? = null
-    private var compressButton:Button? = null
-    private var uploadButton:Button? = null
-    private var bitRate:EditText? = null
-    private var videoView: VideoView? = null
-    private var screenNo: TextView? = null
-    private var videoLayout: ConstraintLayout? = null
     private var isCompressed = false
-    private var compressedFileUri:Uri? = null
+    private var compressedFileUri:String? = null
     private var inputPathUri:String? = null
     private var isCompressedFilePlaying:Boolean? = null
+
+    var dataBinding: ActivityMainBinding? = null
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        compressButton = findViewById(R.id.compressButtton)
-        uploadButton = findViewById(R.id.uploadButton)
-        bitRate = findViewById(R.id.bitRate)
-        videoView = findViewById(R.id.videoView)
-        videoLayout = findViewById(R.id.videoLayout)
-        screenNo = findViewById(R.id.screenNo)
+        dataBinding = setContentView(this,R.layout.activity_main)
+        ButterKnife.bind(this)
+        viewModel = ViewModelProviders.of(this).get(VideoCompressionViewModel::class.java)
+        dataBinding!!.viewModel = viewModel
+
 
         uploadButton!!.setOnClickListener({
             checkPermission()
@@ -77,11 +82,11 @@ class MainActivity : AppCompatActivity() {
 
                     } else {
 
-                        Toast.makeText(this, "Enter a valid bitrate..", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, resources.getString(R.string.enter_valid_bitrate), Toast.LENGTH_LONG).show()
 
                     }
                 }catch(e:Exception){
-                    Toast.makeText(this, "Enter a valid bitrate..", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, resources.getString(R.string.enter_valid_bitrate), Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -92,7 +97,12 @@ class MainActivity : AppCompatActivity() {
 
     fun intialiseViewModel(){
 
-        viewModel = ViewModelProviders.of(this).get(VideoCompressionViewModel::class.java)
+        viewModel!!.playVideoButtonStatus.value = resources.getString(R.string.compress_video)
+        viewModel!!.screenNo.value = resources.getString(R.string.screen1)
+
+        viewModel!!.videoUrl.observe(this, Observer { videoUrl ->
+            videoView!!.setVideoURI(Uri.fromFile(File(videoUrl)))
+        })
 
         viewModel!!.failureMessage.observe(this, Observer { message ->
             if (message != "") {
@@ -102,19 +112,19 @@ class MainActivity : AppCompatActivity() {
         })
 
         viewModel!!.progressValue.observe(this, Observer { progress ->
-            if (progress == 0) {
-                compressButton!!.setText("Compressing..")
-                Toast.makeText(this, "Compressing..", Toast.LENGTH_LONG).show()
-            }
+                viewModel!!.playVideoButtonStatus.postValue(resources.getString(R.string.compressing))
+                Toast.makeText(this, resources.getString(R.string.compressing), Toast.LENGTH_LONG).show()
+                 dataBinding!!.invalidateAll()
         })
 
         viewModel!!.isUploadSuccess.observe(this, Observer { path ->
             if (path != "") {
                 isCompressed = true
                 compressButton!!.isEnabled = true
-                Toast.makeText(this, "Successfully Compressed..", Toast.LENGTH_LONG).show()
-                compressedFileUri = Uri.fromFile(File(path))
-                compressButton!!.setText("Play Compressed Video")
+                Toast.makeText(this, resources.getString(R.string.successfully_compressed), Toast.LENGTH_LONG).show()
+                compressedFileUri = path
+                viewModel!!.playVideoButtonStatus.value =resources.getString(R.string.play_compressed_video)
+                dataBinding!!.invalidateAll()
             }
         })
 
@@ -125,27 +135,27 @@ class MainActivity : AppCompatActivity() {
         if(compressedFileUri != null){
 
             if(isCompressedFilePlaying == null){
-
-                screenNo!!.setText("Screen 3")
-                Toast.makeText(this, "Playing Compressed Video", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, resources.getString(R.string.playing_compressed_video), Toast.LENGTH_LONG).show()
+                viewModel!!.screenNo.value = resources.getString(R.string.screen3)
                 isCompressedFilePlaying = true
-                compressButton!!.setText("Pause")
+                viewModel!!.playVideoButtonStatus.value = resources.getString(R.string.pause)
                 playVideo(compressedFileUri!!)
 
             }else if(isCompressedFilePlaying!!){
 
-                compressButton!!.setText("Play")
+                viewModel!!.playVideoButtonStatus.value = resources.getString(R.string.play)
                 isCompressedFilePlaying = false
                 videoView!!.pause()
 
             }else if(!isCompressedFilePlaying!!){
 
-                compressButton!!.setText("Pause")
+                viewModel!!.playVideoButtonStatus.value = resources.getString(R.string.pause)
                 isCompressedFilePlaying = true
                 videoView!!.start()
 
             }
         }
+        dataBinding!!.invalidateAll()
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -191,10 +201,12 @@ class MainActivity : AppCompatActivity() {
 
                 val selectedVideoUri = data!!.getData()
                 inputPathUri = getPath(selectedVideoUri!!)
-                screenNo!!.setText("Screen 2")
+                viewModel!!.screenNo.value = resources.getString(R.string.screen2)
                 uploadButton!!.visibility = View.GONE
                 videoLayout!!.visibility = View.VISIBLE
-                playVideo(Uri.fromFile(File(inputPathUri)))
+                viewModel!!.videoUrl.value = inputPathUri
+                dataBinding!!.invalidateAll()
+                playVideo(inputPathUri!!)
 
             }
         }
@@ -215,8 +227,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun playVideo(uriPath:Uri){
-        videoView!!.setVideoURI(uriPath);
+    fun playVideo(urlPath:String){
+        viewModel!!.videoUrl.value = urlPath
         videoView!!.start();
     }
 }

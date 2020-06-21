@@ -10,6 +10,9 @@ import java.util.ArrayList
 open class VideoCompressionViewModel(application: Application) : AndroidViewModel(application) {
 
     private var videoCompressModel: VideoCompressModel? = null
+    var playVideoButtonStatus: MutableLiveData<String> = MutableLiveData()
+    var videoUrl: MutableLiveData<String> = MutableLiveData()
+    var screenNo: MutableLiveData<String> = MutableLiveData()
 
     val failureMessage: MutableLiveData<String>
         get() {
